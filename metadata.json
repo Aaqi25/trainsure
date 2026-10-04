@@ -1,0 +1,8 @@
+{
+  "name": "TrainSure",
+  "description": "Intelligent Employee Training, Skills & Compliance Management Platform - Train, Track, Certify, Comply, and Grow.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
