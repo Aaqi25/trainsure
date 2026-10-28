@@ -26,6 +26,8 @@ export const Login: React.FC = () => {
   };
 
   const handleQuickLogin = async (demoEmail: string, demoPass: string) => {
+    setEmail(demoEmail);
+    setPassword(demoPass);
     setError(null);
     setLoading(true);
     try {
@@ -117,8 +119,11 @@ export const Login: React.FC = () => {
                   <div>
                     <span className="font-semibold text-slate-900">Eleanor Vance</span>
                     <span className="text-[10px] text-slate-500 ml-1.5 font-normal">
-                      · Chief Learning Officer (ADMIN)
+                      · CLO (ADMIN)
                     </span>
+                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                      admin@trainsure.internal · Admin123!
+                    </p>
                   </div>
                 </div>
                 <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600 transition-colors" />
@@ -136,8 +141,11 @@ export const Login: React.FC = () => {
                   <div>
                     <span className="font-semibold text-slate-900">Marcus Brody</span>
                     <span className="text-[10px] text-slate-500 ml-1.5 font-normal">
-                      · Engineering Director (MANAGER)
+                      · Director (MANAGER)
                     </span>
+                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                      marcus.brody@trainsure.internal · Manager123!
+                    </p>
                   </div>
                 </div>
                 <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-600 transition-colors" />
@@ -157,6 +165,9 @@ export const Login: React.FC = () => {
                     <span className="text-[10px] text-slate-500 ml-1.5 font-normal">
                       · Backend Dev (EMPLOYEE)
                     </span>
+                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                      rahul.sharma@trainsure.internal · Employee123!
+                    </p>
                   </div>
                 </div>
                 <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 transition-colors" />

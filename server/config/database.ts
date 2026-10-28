@@ -398,6 +398,9 @@ export async function connectDatabase() {
   try {
     await mongoose.connect(uri, {
       serverSelectionTimeoutMS: 5000,
+      maxPoolSize: 25,
+      minPoolSize: 5,
+      socketTimeoutMS: 45000,
       autoIndex: !isProd,
     });
     isMongoConnected = true;

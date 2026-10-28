@@ -1,48 +1,55 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext.tsx';
 import { MainLayout } from './layouts/MainLayout.tsx';
 import { Login } from './pages/auth/Login.tsx';
 import { Register } from './pages/auth/Register.tsx';
 
-// Admin Pages
-import { AdminDashboard } from './pages/admin/AdminDashboard.tsx';
-import { AdminEmployees } from './pages/admin/AdminEmployees.tsx';
-import { AdminDepartments } from './pages/admin/AdminDepartments.tsx';
-import { AdminTrainings } from './pages/admin/AdminTrainings.tsx';
-import { AdminAssessments } from './pages/admin/AdminAssessments.tsx';
-import { AdminCertifications } from './pages/admin/AdminCertifications.tsx';
-import { AdminCompliance } from './pages/admin/AdminCompliance.tsx';
-import { AdminSkills } from './pages/admin/AdminSkills.tsx';
-import { AdminRolesProjects } from './pages/admin/AdminRolesProjects.tsx';
-import { AdminAnalytics } from './pages/admin/AdminAnalytics.tsx';
-import { AdminAuditLogs } from './pages/admin/AdminAuditLogs.tsx';
+// Loading fallback component
+const PageLoader: React.FC = () => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
-// Manager Pages
-import { ManagerDashboard } from './pages/manager/ManagerDashboard.tsx';
-import { ManagerTeam } from './pages/manager/ManagerTeam.tsx';
-import { ManagerTraining } from './pages/manager/ManagerTraining.tsx';
-import { ManagerAssessments } from './pages/manager/ManagerAssessments.tsx';
-import { ManagerCertifications } from './pages/manager/ManagerCertifications.tsx';
-import { ManagerCompliance } from './pages/manager/ManagerCompliance.tsx';
-import { ManagerSkillsEvidence } from './pages/manager/ManagerSkillsEvidence.tsx';
-import { ManagerProjects } from './pages/manager/ManagerProjects.tsx';
-import { ManagerReadiness } from './pages/manager/ManagerReadiness.tsx';
+// Admin Pages (Lazy Loaded)
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard.tsx').then(m => ({ default: m.AdminDashboard })));
+const AdminEmployees = lazy(() => import('./pages/admin/AdminEmployees.tsx').then(m => ({ default: m.AdminEmployees })));
+const AdminDepartments = lazy(() => import('./pages/admin/AdminDepartments.tsx').then(m => ({ default: m.AdminDepartments })));
+const AdminTrainings = lazy(() => import('./pages/admin/AdminTrainings.tsx').then(m => ({ default: m.AdminTrainings })));
+const AdminAssessments = lazy(() => import('./pages/admin/AdminAssessments.tsx').then(m => ({ default: m.AdminAssessments })));
+const AdminCertifications = lazy(() => import('./pages/admin/AdminCertifications.tsx').then(m => ({ default: m.AdminCertifications })));
+const AdminCompliance = lazy(() => import('./pages/admin/AdminCompliance.tsx').then(m => ({ default: m.AdminCompliance })));
+const AdminSkills = lazy(() => import('./pages/admin/AdminSkills.tsx').then(m => ({ default: m.AdminSkills })));
+const AdminRolesProjects = lazy(() => import('./pages/admin/AdminRolesProjects.tsx').then(m => ({ default: m.AdminRolesProjects })));
+const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics.tsx').then(m => ({ default: m.AdminAnalytics })));
+const AdminAuditLogs = lazy(() => import('./pages/admin/AdminAuditLogs.tsx').then(m => ({ default: m.AdminAuditLogs })));
 
-// Employee Pages
-import { EmployeeDashboard } from './pages/employee/EmployeeDashboard.tsx';
-import { EmployeeTraining } from './pages/employee/EmployeeTraining.tsx';
-import { EmployeeAssessments } from './pages/employee/EmployeeAssessments.tsx';
-import { EmployeeCertifications } from './pages/employee/EmployeeCertifications.tsx';
-import { EmployeeSkills } from './pages/employee/EmployeeSkills.tsx';
-import { EmployeeEvidence } from './pages/employee/EmployeeEvidence.tsx';
-import { EmployeeSkillGaps } from './pages/employee/EmployeeSkillGaps.tsx';
-import { EmployeeRecommendations } from './pages/employee/EmployeeRecommendations.tsx';
-import { EmployeeReadiness } from './pages/employee/EmployeeReadiness.tsx';
-import { EmployeeProfile } from './pages/employee/EmployeeProfile.tsx';
+// Manager Pages (Lazy Loaded)
+const ManagerDashboard = lazy(() => import('./pages/manager/ManagerDashboard.tsx').then(m => ({ default: m.ManagerDashboard })));
+const ManagerTeam = lazy(() => import('./pages/manager/ManagerTeam.tsx').then(m => ({ default: m.ManagerTeam })));
+const ManagerTraining = lazy(() => import('./pages/manager/ManagerTraining.tsx').then(m => ({ default: m.ManagerTraining })));
+const ManagerAssessments = lazy(() => import('./pages/manager/ManagerAssessments.tsx').then(m => ({ default: m.ManagerAssessments })));
+const ManagerCertifications = lazy(() => import('./pages/manager/ManagerCertifications.tsx').then(m => ({ default: m.ManagerCertifications })));
+const ManagerCompliance = lazy(() => import('./pages/manager/ManagerCompliance.tsx').then(m => ({ default: m.ManagerCompliance })));
+const ManagerSkillsEvidence = lazy(() => import('./pages/manager/ManagerSkillsEvidence.tsx').then(m => ({ default: m.ManagerSkillsEvidence })));
+const ManagerProjects = lazy(() => import('./pages/manager/ManagerProjects.tsx').then(m => ({ default: m.ManagerProjects })));
+const ManagerReadiness = lazy(() => import('./pages/manager/ManagerReadiness.tsx').then(m => ({ default: m.ManagerReadiness })));
 
-// Shared Pages
-import { NotificationsPage } from './pages/common/NotificationsPage.tsx';
+// Employee Pages (Lazy Loaded)
+const EmployeeDashboard = lazy(() => import('./pages/employee/EmployeeDashboard.tsx').then(m => ({ default: m.EmployeeDashboard })));
+const EmployeeTraining = lazy(() => import('./pages/employee/EmployeeTraining.tsx').then(m => ({ default: m.EmployeeTraining })));
+const EmployeeAssessments = lazy(() => import('./pages/employee/EmployeeAssessments.tsx').then(m => ({ default: m.EmployeeAssessments })));
+const EmployeeCertifications = lazy(() => import('./pages/employee/EmployeeCertifications.tsx').then(m => ({ default: m.EmployeeCertifications })));
+const EmployeeSkills = lazy(() => import('./pages/employee/EmployeeSkills.tsx').then(m => ({ default: m.EmployeeSkills })));
+const EmployeeEvidence = lazy(() => import('./pages/employee/EmployeeEvidence.tsx').then(m => ({ default: m.EmployeeEvidence })));
+const EmployeeSkillGaps = lazy(() => import('./pages/employee/EmployeeSkillGaps.tsx').then(m => ({ default: m.EmployeeSkillGaps })));
+const EmployeeRecommendations = lazy(() => import('./pages/employee/EmployeeRecommendations.tsx').then(m => ({ default: m.EmployeeRecommendations })));
+const EmployeeReadiness = lazy(() => import('./pages/employee/EmployeeReadiness.tsx').then(m => ({ default: m.EmployeeReadiness })));
+const EmployeeProfile = lazy(() => import('./pages/employee/EmployeeProfile.tsx').then(m => ({ default: m.EmployeeProfile })));
+
+// Shared Pages (Lazy Loaded)
+const NotificationsPage = lazy(() => import('./pages/common/NotificationsPage.tsx').then(m => ({ default: m.NotificationsPage })));
 
 // Protected Route Component with Role Checks
 const ProtectedRoute: React.FC<{
@@ -95,7 +102,8 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
           {/* Public Auth Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -370,7 +378,8 @@ export default function App() {
 
           {/* Catch-all redirect */}
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </AuthProvider>
   );

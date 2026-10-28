@@ -4,7 +4,7 @@ import { UserModel, IUser } from '../models/index.ts';
 import { generateToken, AuthenticatedRequest } from '../middleware/auth.ts';
 import { AppError } from '../middleware/error.ts';
 import { logAudit } from '../services/auditService.ts';
-import { seedDatabase } from '../seed/seedData.ts';
+import { seedDatabase, ensureDemoAccounts } from '../seed/seedData.ts';
 
 export async function register(req: Request, res: Response, next: NextFunction) {
   try {
@@ -89,7 +89,24 @@ export async function login(req: Request, res: Response, next: NextFunction) {
       user = await UserModel.findOne({ email: 'eleanor.vance@trainsure.internal' });
     }
 
-    // Auto-seed if database is completely empty on first launch
+    const isDemoPersona = [
+      'admin@trainsure.internal',
+      'eleanor.vance@trainsure.internal',
+      'eleanor@trainsure.internal',
+      'marcus.brody@trainsure.internal',
+      'rahul.sharma@trainsure.internal',
+    ].includes(normalizedEmail);
+
+    if (!user && isDemoPersona) {
+      console.log(`[TrainSure Auth] Demo account ${normalizedEmail} requested but not in DB. Initializing demo accounts...`);
+      await ensureDemoAccounts();
+      user = await UserModel.findOne({ email: normalizedEmail });
+      if (!user && (normalizedEmail === 'eleanor.vance@trainsure.internal' || normalizedEmail === 'eleanor@trainsure.internal')) {
+        user = await UserModel.findOne({ email: 'admin@trainsure.internal' });
+      }
+    }
+
+    // Auto-seed full dataset if database is completely empty
     if (!user) {
       const totalUsers = await UserModel.countDocuments();
       if (totalUsers === 0) {
@@ -110,7 +127,24 @@ export async function login(req: Request, res: Response, next: NextFunction) {
       throw new AppError('This user account has been deactivated', 403, 'ACCOUNT_DEACTIVATED');
     }
 
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    let isMatch = await bcrypt.compare(password, user.passwordHash);
+
+    // Auto-repair demo user password hash if known persona credentials are provided
+    if (!isMatch && isDemoPersona) {
+      const isKnownDemoPassword =
+        ((normalizedEmail.includes('admin') || normalizedEmail.includes('eleanor')) && password === 'Admin123!') ||
+        (normalizedEmail.includes('marcus') && password === 'Manager123!') ||
+        (normalizedEmail.includes('rahul') && password === 'Employee123!');
+
+      if (isKnownDemoPassword) {
+        const salt = await bcrypt.genSalt(10);
+        const newHash = await bcrypt.hash(password, salt);
+        await UserModel.findByIdAndUpdate(user._id, { passwordHash: newHash });
+        user.passwordHash = newHash;
+        isMatch = true;
+      }
+    }
+
     if (!isMatch) {
       throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
     }

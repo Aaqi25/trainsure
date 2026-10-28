@@ -21,8 +21,9 @@ import {
 
 export async function seedDatabase(force = false) {
   const existingUsers = await UserModel.countDocuments();
-  if (existingUsers > 0 && !force) {
-    console.log('[Seed] Database already seeded. Skipping initial seed.');
+  const adminExists = await UserModel.findOne({ email: 'admin@trainsure.internal' });
+  if (existingUsers > 0 && adminExists && !force) {
+    console.log('[Seed] Database already seeded with active admin. Skipping initial seed.');
     return;
   }
 
@@ -30,23 +31,25 @@ export async function seedDatabase(force = false) {
 
   // Clear existing collections if force
   if (force) {
-    UserModel.clear();
-    DepartmentModel.clear();
-    TrainingModel.clear();
-    TrainingAssignmentModel.clear();
-    AssessmentModel.clear();
-    AssessmentAttemptModel.clear();
-    CertificationModel.clear();
-    EmployeeCertificationModel.clear();
-    ComplianceRequirementModel.clear();
-    SkillModel.clear();
-    EmployeeSkillModel.clear();
-    EvidenceModel.clear();
-    RoleModel.clear();
-    ProjectModel.clear();
-    LearningResourceModel.clear();
-    NotificationModel.clear();
-    AuditLogModel.clear();
+    await Promise.all([
+      UserModel.clear(),
+      DepartmentModel.clear(),
+      TrainingModel.clear(),
+      TrainingAssignmentModel.clear(),
+      AssessmentModel.clear(),
+      AssessmentAttemptModel.clear(),
+      CertificationModel.clear(),
+      EmployeeCertificationModel.clear(),
+      ComplianceRequirementModel.clear(),
+      SkillModel.clear(),
+      EmployeeSkillModel.clear(),
+      EvidenceModel.clear(),
+      RoleModel.clear(),
+      ProjectModel.clear(),
+      LearningResourceModel.clear(),
+      NotificationModel.clear(),
+      AuditLogModel.clear(),
+    ]);
   }
 
   const salt = await bcrypt.genSalt(10);
@@ -1102,4 +1105,51 @@ export async function seedDatabase(force = false) {
   });
 
   console.log('[Seed] Database successfully seeded with 1 Admin, 2 Managers, 8 Employees, and all related modules.');
+}
+
+
+export async function ensureDemoAccounts(): Promise<void> {
+  const salt = await bcrypt.genSalt(10);
+  const adminHash = await bcrypt.hash('Admin123!', salt);
+  const managerHash = await bcrypt.hash('Manager123!', salt);
+  const employeeHash = await bcrypt.hash('Employee123!', salt);
+
+  let admin = await UserModel.findOne({ email: 'admin@trainsure.internal' });
+  if (!admin) {
+    admin = await UserModel.create({
+      employeeId: 'EMP-ADM-001',
+      name: 'Eleanor Vance',
+      email: 'admin@trainsure.internal',
+      passwordHash: adminHash,
+      role: 'ADMIN',
+      jobTitle: 'Chief Learning Officer & VP HR',
+      status: 'ACTIVE',
+    });
+  }
+
+  let mgr = await UserModel.findOne({ email: 'marcus.brody@trainsure.internal' });
+  if (!mgr) {
+    mgr = await UserModel.create({
+      employeeId: 'EMP-MGR-001',
+      name: 'Marcus Brody',
+      email: 'marcus.brody@trainsure.internal',
+      passwordHash: managerHash,
+      role: 'MANAGER',
+      jobTitle: 'Director of Engineering',
+      status: 'ACTIVE',
+    });
+  }
+
+  let emp = await UserModel.findOne({ email: 'rahul.sharma@trainsure.internal' });
+  if (!emp) {
+    emp = await UserModel.create({
+      employeeId: 'EMP-1001',
+      name: 'Rahul Sharma',
+      email: 'rahul.sharma@trainsure.internal',
+      passwordHash: employeeHash,
+      role: 'EMPLOYEE',
+      jobTitle: 'Backend Developer',
+      status: 'ACTIVE',
+    });
+  }
 }

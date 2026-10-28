@@ -17,13 +17,30 @@ import { calculateEmployeeRisk, calculateAllEmployeesRisk } from '../services/ri
 import { runAllJobsNow } from '../jobs/cronJobs.ts';
 import { seedDatabase } from '../seed/seedData.ts';
 
+
+
+let adminAnalyticsCache: { timestamp: number; data: any } | null = null;
+const ADMIN_CACHE_TTL = 15000;
+
 export async function getAdminAnalytics(_req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
-    const employees = await UserModel.find({ role: 'EMPLOYEE', status: 'ACTIVE' });
-    const trainings = await TrainingModel.find();
-    const assignments = await TrainingAssignmentModel.find();
-    const certs = await EmployeeCertificationModel.find();
-    const departments = await DepartmentModel.find();
+    const nowMs = Date.now();
+    if (adminAnalyticsCache && nowMs - adminAnalyticsCache.timestamp < ADMIN_CACHE_TTL) {
+      return res.status(200).json({
+        success: true,
+        message: 'Admin metrics calculated (cached)',
+        data: adminAnalyticsCache.data,
+      });
+    }
+
+    const [employees, trainings, assignments, certs, departments, complianceList] = await Promise.all([
+      UserModel.find({ role: 'EMPLOYEE', status: 'ACTIVE' }),
+      TrainingModel.find(),
+      TrainingAssignmentModel.find(),
+      EmployeeCertificationModel.find(),
+      DepartmentModel.find(),
+      evaluateAllEmployeesCompliance(),
+    ]);
 
     const now = new Date();
 
@@ -48,8 +65,7 @@ export async function getAdminAnalytics(_req: AuthenticatedRequest, res: Respons
       else activeCerts++;
     }
 
-    // Dynamic compliance numbers
-    const complianceList = await evaluateAllEmployeesCompliance();
+    // Dynamic compliance numbers (resolved in parallel)
     const compliantCount = complianceList.filter(c => c.overallStatus === 'COMPLIANT').length;
     const atRiskCount = complianceList.filter(c => c.overallStatus === 'AT_RISK').length;
     const nonCompliantCount = complianceList.filter(c => c.overallStatus === 'NON_COMPLIANT').length;
@@ -108,10 +124,7 @@ export async function getAdminAnalytics(_req: AuthenticatedRequest, res: Respons
       { month: 'Oct', assigned: assignments.length, completed: completedAssignments },
     ];
 
-    res.status(200).json({
-      success: true,
-      message: 'Admin metrics calculated',
-      data: {
+    const payload = {
         cards: {
           totalEmployees,
           activeTrainings,
@@ -129,7 +142,14 @@ export async function getAdminAnalytics(_req: AuthenticatedRequest, res: Respons
         complianceDistribution,
         certificationDistribution,
         activityTrend,
-      },
+      };
+
+    adminAnalyticsCache = { timestamp: Date.now(), data: payload };
+
+    res.status(200).json({
+      success: true,
+      message: 'Admin metrics calculated',
+      data: payload,
     });
   } catch (err) {
     next(err);
@@ -139,10 +159,13 @@ export async function getAdminAnalytics(_req: AuthenticatedRequest, res: Respons
 export async function getManagerAnalytics(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
     const managerId = req.user!._id;
-    const teamMembers = await UserModel.find({ managerId, status: 'ACTIVE' });
+    const [teamMembers, assignments, certs, allCompliance] = await Promise.all([
+      UserModel.find({ managerId, status: 'ACTIVE' }),
+      TrainingAssignmentModel.find(),
+      EmployeeCertificationModel.find(),
+      evaluateAllEmployeesCompliance(),
+    ]);
     const teamIds = new Set(teamMembers.map(t => t._id));
-
-    const assignments = await TrainingAssignmentModel.find();
     const teamAssignments = assignments.filter(a => teamIds.has(a.employeeId));
 
     const now = new Date();
@@ -157,15 +180,12 @@ export async function getManagerAnalytics(req: AuthenticatedRequest, res: Respon
       return days >= 0 && days <= 7;
     }).length;
 
-    const certs = await EmployeeCertificationModel.find();
     const teamCerts = certs.filter(c => teamIds.has(c.employeeId));
     let expiringCerts = 0;
     for (const c of teamCerts) {
       const diff = Math.ceil((new Date(c.expiryDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
       if (diff > 0 && diff <= 30) expiringCerts++;
     }
-
-    const allCompliance = await evaluateAllEmployeesCompliance();
     const teamCompliance = allCompliance.filter(c => teamIds.has(c.employeeId));
     const compliantCount = teamCompliance.filter(c => c.overallStatus === 'COMPLIANT').length;
     const complianceRate = teamMembers.length > 0 ? Math.round((compliantCount / teamMembers.length) * 100) : 100;
