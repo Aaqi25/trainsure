@@ -11,6 +11,7 @@ import { initCronJobs } from './server/jobs/cronJobs.ts';
 import { initEmailService } from './server/services/emailService.ts';
 import { errorHandler } from './server/middleware/error.ts';
 import { uploadDir } from './server/middleware/upload.ts';
+import { UserModel } from './server/models/index.ts';
 
 dotenv.config();
 
@@ -150,14 +151,16 @@ async function startServer() {
     // 1. Initialize Database
     await connectDatabase();
 
-    // 2. Seed initial workforce dataset
-    if (isDev) {
+    // 2. Seed initial workforce dataset if empty
+    const userCount = await UserModel.countDocuments();
+    if (userCount === 0 && process.env.SEED_DEMO_DATA !== 'false') {
+      console.log('[TrainSure Seed] Empty database detected on startup: seeding initial workforce dataset...');
       await seedDatabase(false);
     } else if (process.env.SEED_DEMO_DATA === 'true') {
       console.log('[TrainSure Seed] SEED_DEMO_DATA=true: seeding initial workforce data...');
       await seedDatabase(false);
     } else {
-      console.log('[TrainSure Seed] Production mode: Automatic seed skipped (set SEED_DEMO_DATA=true to seed initial dataset).');
+      console.log(`[TrainSure Seed] Database contains ${userCount} existing users. Skipping auto-seed.`);
     }
 
     // 3. Initialize background scheduled jobs

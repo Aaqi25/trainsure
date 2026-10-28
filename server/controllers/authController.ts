@@ -4,6 +4,7 @@ import { UserModel, IUser } from '../models/index.ts';
 import { generateToken, AuthenticatedRequest } from '../middleware/auth.ts';
 import { AppError } from '../middleware/error.ts';
 import { logAudit } from '../services/auditService.ts';
+import { seedDatabase } from '../seed/seedData.ts';
 
 export async function register(req: Request, res: Response, next: NextFunction) {
   try {
@@ -78,7 +79,29 @@ export async function login(req: Request, res: Response, next: NextFunction) {
       throw new AppError('Email and password are required', 400, 'MISSING_CREDENTIALS');
     }
 
-    const user = await UserModel.findOne({ email: email.toLowerCase() });
+    const normalizedEmail = String(email).toLowerCase().trim();
+    let user = await UserModel.findOne({ email: normalizedEmail });
+
+    // Support both admin@trainsure.internal and eleanor.vance@trainsure.internal for CLO admin persona
+    if (!user && (normalizedEmail === 'eleanor.vance@trainsure.internal' || normalizedEmail === 'eleanor@trainsure.internal')) {
+      user = await UserModel.findOne({ email: 'admin@trainsure.internal' });
+    } else if (!user && normalizedEmail === 'admin@trainsure.internal') {
+      user = await UserModel.findOne({ email: 'eleanor.vance@trainsure.internal' });
+    }
+
+    // Auto-seed if database is completely empty on first launch
+    if (!user) {
+      const totalUsers = await UserModel.countDocuments();
+      if (totalUsers === 0) {
+        console.log('[TrainSure Auth] Database is empty on login attempt. Auto-seeding initial workforce dataset...');
+        await seedDatabase(false);
+        user = await UserModel.findOne({ email: normalizedEmail });
+        if (!user && (normalizedEmail === 'eleanor.vance@trainsure.internal' || normalizedEmail === 'eleanor@trainsure.internal')) {
+          user = await UserModel.findOne({ email: 'admin@trainsure.internal' });
+        }
+      }
+    }
+
     if (!user) {
       throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
     }

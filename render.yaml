@@ -30,9 +30,8 @@ services:
       - key: SMTP_FROM
         value: "TrainSure Notifications <no-reply@trainsure.internal>"
       - key: SEED_DEMO_DATA
-        value: "false"
+        value: "true"
       - key: ENABLE_DEMO_SWITCH
         value: "false"
       - key: ALLOW_SEED_RESET
         value: "false"
-
