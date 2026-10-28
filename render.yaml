@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: trainsure-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 1d
+      - key: CLIENT_URL
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM
+        value: "TrainSure Notifications <no-reply@trainsure.internal>"
+      - key: SEED_DEMO_DATA
+        value: "false"
+      - key: ENABLE_DEMO_SWITCH
+        value: "false"
+      - key: ALLOW_SEED_RESET
+        value: "false"
+
