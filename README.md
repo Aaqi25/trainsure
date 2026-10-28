@@ -264,3 +264,8 @@ All API responses follow a standardized JSON envelope:
 - **Resource Ownership Validation:** Employees can only inspect their own evidence, assessments, and certifications.
 - **Sanitized Assessment Delivery:** Assessment answer keys (`correctAnswer`) are automatically stripped from payloads delivered to employees before submission.
 - **Upload Restrictions:** Multer disk storage restricted to `application/pdf`, `image/jpeg`, and `image/png` with 10MB file size ceiling and sanitized unique timestamps.
+
+---
+
+## 12. License
+Apache-2.0. Built for Google AI Studio.
